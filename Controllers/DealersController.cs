@@ -85,16 +85,16 @@ namespace CarShop.Controllers
         }
 
         [HttpGet]
-        public HttpResponseMessage SendMySummary(string emailAddress)
+        public async System.Threading.Tasks.Task<HttpResponseMessage> SendMySummary(string emailAddress)
         {
             var identity = (ClaimsIdentity)User.Identity;
             IEnumerable<Claim> claims = identity.Claims;
             var username = claims.FirstOrDefault(x => x.Type.Equals("sub"));
-
-            _dealerServices.GenerateSummaryEmail(emailAddress, username.Value);
-            return Request.CreateResponse(HttpStatusCode.OK);
-
-            // return Request.CreateErrorResponse(HttpStatusCode.NotFound, "No dealer found");
+            bool sendMail = await _dealerServices.GenerateSummaryEmailAsync(emailAddress, username.Value);
+            if (sendMail)
+                return Request.CreateResponse(HttpStatusCode.OK);
+            else
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, "Cannot send email");
         }
 
         [HttpPut]
